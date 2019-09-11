@@ -38,6 +38,9 @@ for rank in range(number_servers):
                     'shapes_utils.py',
                     'parametered_env.py',
                     'start_one_server.py',
+                    'RemoteEnvironmentClient.py',
+                    'RemoteEnvironmentServer.py',
+                    'echo_server.py',
                     'reset']
 
     # make the env folder and copy all the necessary files

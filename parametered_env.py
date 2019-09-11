@@ -2,14 +2,6 @@
 import os
 import numpy
 
-# Imports with probable installation required
-try:
-    import tensorforce
-except ImportError:
-    print('*** Missing required packages, I will install them for you ***')
-    os.system('pip3 install tensorforce')
-    import tensorforce
-
 from tensorforce.agents    import PPOAgent
 from tensorforce.execution import Runner
 
@@ -43,7 +35,7 @@ def resume_env():
     reynolds                = 100.0
     output_vtu              = True
     shape_h                 = 1.0
-    domain_h                = 1.0
+    domain_h                = 0.8
     cell_limit              = 50000
     xmin                    =-15.0
     xmax                    = 30.0

@@ -1,20 +1,12 @@
 # Generic imports
-import os
-import os.path
-import PIL
+import os, os.path
 import math
+import pygmsh
+import meshio
 import scipy.special
 import matplotlib
 import numpy             as np
 import matplotlib.pyplot as plt
-
-# Imports with probable installation required
-try:
-    import pygmsh, meshio
-except ImportError:
-    print('*** Missing required packages, I will install them for you ***')
-    os.system('pip3 install pygmsh meshio')
-    import pygmsh, meshio
 
 # Custom imports
 from meshes_utils import *
@@ -44,8 +36,6 @@ class Shape:
         self.n_sampling_pts = n_sampling_pts
         self.curve_pts      = np.array([])
         self.area           = 0.0
-        self.size_x         = 0.0
-        self.size_y         = 0.0
         self.index          = 0
 
         if (len(radius) == n_control_pts): self.radius = radius
@@ -86,7 +76,6 @@ class Shape:
         centering = kwargs.get('centering', True)
         cylinder  = kwargs.get('cylinder',  False)
         magnify   = kwargs.get('magnify',   1.0)
-        ccws      = kwargs.get('ccws',      True)
 
         # Generate random control points if empty
         if (len(self.control_pts) == 0):
@@ -104,14 +93,16 @@ class Shape:
             self.control_pts -= center
 
         # Sort points counter-clockwise
-        if (ccws):
-            control_pts, radius, edgy = ccw_sort(self.control_pts,
-                                                 self.radius,
-                                                 self.edgy)
-        else:
-            control_pts = np.array(self.control_pts)
-            radius      = np.array(self.radius)
-            edgy        = np.array(self.edgy)
+        #control_pts, radius, edgy = ccw_sort(self.control_pts,
+        #                                     self.radius,
+        #                                     self.edgy)
+        control_pts = np.array(self.control_pts)
+        radius = np.array(self.radius)
+        edgy = np.array(self.edgy)
+
+        #self.control_pts = control_pts
+        #self.radius      = radius
+        #self.edgy        = edgy
 
         # Create copy of control_pts for further modification
         augmented_control_pts = control_pts
@@ -154,29 +145,20 @@ class Shape:
         self.curve_pts = np.column_stack((x,y,z))
         self.curve_pts = remove_duplicate_pts(self.curve_pts)
 
-        # Center set of points
-        if (centering):
-            center            = np.mean(self.curve_pts, axis=0)
-            self.curve_pts   -= center
-            self.control_pts -= center[:1]
-
         # Compute area
         self.compute_area()
-
-        # Compute dimensions
-        self.compute_dimensions()
 
     ### ************************************************
     ### Write image
     def generate_image(self, *args, **kwargs):
         # Handle optional argument
+        special_pt     = kwargs.get('special_pt',     None)
         plot_pts       = kwargs.get('plot_pts',       False)
         override_name  = kwargs.get('override_name',  '')
-        show_quadrants = kwargs.get('show_quadrants', False)
-        max_radius     = kwargs.get('max_radius',     1.0)
-        min_radius     = kwargs.get('min_radius',     0.2)
+        show_quadrants = kwargs.get('show_quadrants', 'False')
+        quad_radius    = kwargs.get('quad_radius',    1.0)
         xmin           = kwargs.get('xmin',          -5.0)
-        xmax           = kwargs.get('xmax',           5.0)
+        xmax           = kwargs.get('xmax',          10.0)
         ymin           = kwargs.get('ymin',          -5.0)
         ymax           = kwargs.get('ymax',           5.0)
 
@@ -185,44 +167,36 @@ class Shape:
         plt.ylim([ymin,ymax])
         plt.axis('off')
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.fill([xmin,xmax,xmax,xmin],
-                 [ymin,ymin,ymax,ymax],
-                 color=(0.784,0.773,0.741),
-                 linewidth=2.5,
-                 zorder=0)
         plt.fill(self.curve_pts[:,0],
                  self.curve_pts[:,1],
                  'black',
-                 linewidth=0,
-                 zorder=1)
+                 linewidth=2.5)
 
         # Plot points
         # Each point gets a different color
         if (plot_pts):
-            colors = matplotlib.cm.ocean(np.linspace(0, 1, self.n_control_pts))
+            colors = matplotlib.cm.ocean(np.linspace(0,1,self.n_control_pts))
             plt.scatter(self.control_pts[:,0],
                         self.control_pts[:,1],
-                        color=colors,
-                        s=16,
-                        zorder=2)
+                        color=colors)
+
+        # Plot special point
+        if (special_pt) is not None:
+            plt.plot(self.control_pts[special_pt,0],
+                     self.control_pts[special_pt,1],
+                     'o',
+                     color=(1.0,0.494,0.180))
 
         # Plot quadrants
         if (show_quadrants):
             for pt in range(self.n_control_pts):
                 dangle = (360.0/float(self.n_control_pts))
                 angle  = dangle*float(pt)+dangle/2.0
-                x_max  = max_radius*math.cos(math.radians(angle))
-                y_max  = max_radius*math.sin(math.radians(angle))
-                x_min  = min_radius*math.cos(math.radians(angle))
-                y_min  = min_radius*math.sin(math.radians(angle))
-                plt.plot([x_min, x_max],
-                         [y_min, y_max],
-                         color='w',
-                         linewidth=1)
+                x      = quad_radius*math.cos(math.radians(angle))
+                y      = quad_radius*math.sin(math.radians(angle))
+                plt.plot([0, x],[0, y],color='w')
 
-            circle = plt.Circle((0,0),max_radius,fill=False,color='w')
-            plt.gcf().gca().add_artist(circle)
-            circle = plt.Circle((0,0),min_radius,fill=False,color='w')
+            circle = plt.Circle((0,0),quad_radius,fill=False,color='w')
             plt.gcf().gca().add_artist(circle)
 
         # Save image
@@ -230,10 +204,11 @@ class Shape:
         if (override_name != ''): filename = override_name
 
         plt.savefig(filename,
-                    dpi=200)
-        plt.close(plt.gcf())
-        plt.cla()
-        trim_white(filename)
+                    dpi=200,
+                    bbox_inches='tight',
+                    pad_inches=0,
+                    facecolor=(0.784,0.773,0.741))
+        plt.clf()
 
     ### ************************************************
     ### Write csv
@@ -241,14 +216,20 @@ class Shape:
         with open(self.name+'_'+str(self.index)+'.csv','w') as file:
             # Write header
             file.write('{} {}\n'.format(self.n_control_pts,
-                                        self.n_sampling_pts))
+                                              self.n_sampling_pts))
+
+            # Write radii
+            for i in range(0,self.n_control_pts):
+                file.write('{}\n'.format(self.radius[i]))
+
+            # Write edgy
+            for i in range(0,self.n_control_pts):
+                file.write('{}\n'.format(self.edgy[i]))
 
             # Write control points coordinates
             for i in range(0,self.n_control_pts):
-                file.write('{} {} {} {}\n'.format(self.control_pts[i,0],
-                                                  self.control_pts[i,1],
-                                                  self.radius[i],
-                                                  self.edgy[i]))
+                file.write('{} {}\n'.format(self.control_pts[i,0],
+                                            self.control_pts[i,1]))
 
     ### ************************************************
     ### Read csv and initialize shape with it
@@ -283,11 +264,17 @@ class Shape:
             n_sampling_pts = int(header[1])
 
             for i in range(0,n_control_pts):
+                rad = file.readline().split()
+                radius.append(float(rad[0]))
+
+            for i in range(0,n_control_pts):
+                edg = file.readline().split()
+                edgy.append(float(edg[0]))
+
+            for i in range(0,n_control_pts):
                 coords = file.readline().split()
                 x.append(float(coords[0]))
                 y.append(float(coords[1]))
-                radius.append(float(coords[2]))
-                edgy.append(float(coords[3]))
                 control_pts = np.column_stack((x,y))
 
         self.__init__(name,
@@ -303,25 +290,19 @@ class Shape:
         # Handle optional argument
         mesh_domain = kwargs.get('mesh_domain', False)
         xmin        = kwargs.get('xmin',       -5.0)
-        xmax        = kwargs.get('xmax',        5.0)
+        xmax        = kwargs.get('xmax',        10.0)
         ymin        = kwargs.get('ymin',       -5.0)
         ymax        = kwargs.get('ymax',        5.0)
-        shape_h     = kwargs.get('shape_h',     1.0)
-        domain_h    = kwargs.get('domain_h',    2.0)
+        shape_h     = kwargs.get('shape_h',     10.0)
+        domain_h    = kwargs.get('domain_h',    20.0)
         mesh_format = kwargs.get('mesh_format', 'mesh')
-        refine      = kwargs.get('refine',      False)
-
-        # Define refinement factors if necessary
-        if (refine):
-            yintp   = ymax/3.0
-            yintm   = ymin/3.0
-            xintp   = 9.0*xmax/10.0
-            xintm   = xmin/3.0
 
         # Convert curve to polygon
+        mesh_size = 1.0
+        min_size  = mesh_size*shape_h
         geom      = pygmsh.built_in.Geometry()
         poly      = geom.add_polygon(self.curve_pts,
-                                     shape_h,
+                                     mesh_size*shape_h,
                                      make_surface=not mesh_domain)
 
         # Mesh domain if necessary
@@ -330,51 +311,32 @@ class Shape:
             border = geom.add_rectangle(xmin, xmax,
                                         ymin, ymax,
                                         0.0,
-                                        domain_h,
+                                        mesh_size*domain_h,
                                         holes=[poly.line_loop])
-
-            # Refine area around shape if necessary
-            if (refine):
-                p0 = geom.add_point([xintm,yintm,0.0], shape_h)
-                p1 = geom.add_point([xintm,yintp,0.0], shape_h)
-                p2 = geom.add_point([xintp,yintp,0.0], shape_h)
-                p3 = geom.add_point([xintp,yintm,0.0], shape_h)
-                l0 = geom.add_line(p0,p1)
-                l1 = geom.add_line(p1,p2)
-                l2 = geom.add_line(p2,p3)
-                l3 = geom.add_line(p3,p0)
-
-                s = 'Line{%s} In Surface{%s};' % (l0.id, border.id)
-                geom.add_raw_code(s)
-                s = 'Line{%s} In Surface{%s};' % (l1.id, border.id)
-                geom.add_raw_code(s)
-                s = 'Line{%s} In Surface{%s};' % (l2.id, border.id)
-                geom.add_raw_code(s)
-                s = 'Line{%s} In Surface{%s};' % (l3.id, border.id)
-                geom.add_raw_code(s)
 
         # Generate mesh and write in medit format
         try:
-            mesh = pygmsh.generate_mesh(geom, extra_gmsh_arguments=["-v", "0"])
+            mesh = pygmsh.generate_mesh(geom,
+                                        extra_gmsh_arguments=["-v", "0"])
         except AssertionError:
-            print('\n'+'!!!!! Meshing failed !!!!!')
-            return False, 0
+            print('Meshing failed')
+            return False, 0, 0.0
+        else:
+            # Compute data from mesh
+            n_tri = len(mesh.cells['triangle'])
 
-        # Compute data from mesh
-        n_tri = len(mesh.cells['triangle'])
+            # Remove vertex keywork from cells dictionnary
+            # to avoid warning message from meshio
+            del mesh.cells['vertex']
 
-        # Remove vertex keywork from cells dictionnary
-        # to avoid warning message from meshio
-        del mesh.cells['vertex']
+            # Remove lines if output format is xml
+            if (mesh_format == 'xml'): del mesh.cells['line']
 
-        # Remove lines if output format is xml
-        if (mesh_format == 'xml'): del mesh.cells['line']
+            # Write mesh
+            filename = self.name+'_'+str(self.index)+'.'+mesh_format
+            meshio.write_points_cells(filename, mesh.points, mesh.cells)
 
-        # Write mesh
-        filename = self.name+'_'+str(self.index)+'.'+mesh_format
-        meshio.write_points_cells(filename, mesh.points, mesh.cells)
-
-        return True, n_tri
+            return True, n_tri
 
     ### ************************************************
     ### Get shape bounding box
@@ -450,25 +412,6 @@ class Shape:
             y2 = self.curve_pts[i,  1]
 
             self.area += 2.0*(y1+y2)*(x2-x1)
-
-    ### ************************************************
-    ### Compute shape dimensions
-    def compute_dimensions(self):
-        self.size_y = 0.0
-        self.size_x = 0.0
-        xmin = 1.0e20
-        xmax =-1.0e20
-        ymin = 1.0e20
-        ymax =-1.0e20
-
-        for i in range(len(self.curve_pts)):
-            xmin = min(xmin, self.curve_pts[i,0])
-            xmax = max(xmax, self.curve_pts[i,0])
-            ymin = min(ymin, self.curve_pts[i,1])
-            ymax = max(ymax, self.curve_pts[i,1])
-
-        self.size_x = xmax - xmin
-        self.size_y = ymax - ymin
 
 ### End of class Shape
 ### ************************************************
@@ -554,7 +497,7 @@ def remove_duplicate_pts(pts):
 def ccw_sort(pts, rad, edg):
     geometric_center = np.mean(pts,axis=0)
     translated_pts   = pts - geometric_center
-    angles           = np.arctan2(translated_pts[:,1], translated_pts[:,0])
+    angles           = np.arctan2(translated_pts[:,0], translated_pts[:,1])
     x                = angles.argsort()
     pts2             = np.array(pts)
     rad2             = np.array(rad)
@@ -592,21 +535,24 @@ def generate_bezier_curve(p1, p2, angle1, angle2, n_sampling_pts, radius):
     # Sample the curve if necessary
     if (n_sampling_pts != 0):
         dist = compute_distance(p1, p2)
-        radius = 0.707*dist*radius
+        if (radius == 'random'):
+            radius = 0.707*dist*np.random.uniform(low=0.0, high=1.0)
+        else:
+            radius = 0.707*dist*radius
 
-        # Create array of control pts for cubic Bezier curve
-        # First and last points are given, while the two intermediate
-        # points are computed from edge points, angles and radius
-        control_pts      = np.zeros((4,2))
-        control_pts[0,:] = p1[:]
-        control_pts[3,:] = p2[:]
-        control_pts[1,:] = p1 + np.array(
-            [radius*np.cos(angle1), radius*np.sin(angle1)])
-        control_pts[2,:] = p2 + np.array(
-            [radius*np.cos(angle2+np.pi), radius*np.sin(angle2+np.pi)])
+            # Create array of control pts for cubic Bezier curve
+            # First and last points are given, while the two intermediate
+            # points are computed from edge points, angles and radius
+            control_pts      = np.zeros((4,2))
+            control_pts[0,:] = p1[:]
+            control_pts[3,:] = p2[:]
+            control_pts[1,:] = p1 + np.array(
+                [radius*np.cos(angle1), radius*np.sin(angle1)])
+            control_pts[2,:] = p2 + np.array(
+                [radius*np.cos(angle2+np.pi), radius*np.sin(angle2+np.pi)])
 
-        # Compute points on the Bezier curve
-        curve = sample_bezier_curve(control_pts, n_sampling_pts)
+            # Compute points on the Bezier curve
+            curve = sample_bezier_curve(control_pts, n_sampling_pts)
 
     # Else return just a straight line
     else:
@@ -614,13 +560,3 @@ def generate_bezier_curve(p1, p2, angle1, angle2, n_sampling_pts, radius):
         curve = np.vstack([curve,p2])
 
     return curve
-
-### Crop white background from image
-def trim_white(filename):
-
-    im   = PIL.Image.open(filename)
-    bg   = PIL.Image.new(im.mode, im.size, (255,255,255))
-    diff = PIL.ImageChops.difference(im, bg)
-    bbox = diff.getbbox()
-    cp   = im.crop(bbox)
-    cp.save(filename)

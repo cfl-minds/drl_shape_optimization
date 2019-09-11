@@ -1,14 +1,8 @@
 # Generic imports
 import os
 import numpy as np
-
-# Imports with probable installation required
-try:
-    import meshio
-except ImportError:
-    print('*** Missing required packages, I will install them for you ***')
-    os.system('pip3 install meshio')
-    import meshio
+import pygmsh
+import meshio
 
 ### ************************************************
 ### Mesh class

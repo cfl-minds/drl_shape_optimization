@@ -1,0 +1,17 @@
+*.egg
+*.pyc
+*.vscode
+.DS_Store
+
+/.eggs/
+/dist/
+/docs/_*
+/tensorforce.egg-info/
+/Tensorforce.egg-info/
+
+/logs/
+/saving-test/
+/summaries/
+/summaries-test/
+/temp/
+/tensorboard/

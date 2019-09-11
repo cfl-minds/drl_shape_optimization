@@ -1,8 +1,9 @@
+import os
 import argparse
 import socket
-from parametered_env import *
-from tensorforce_socketing.RemoteEnvironmentServer import RemoteEnvironmentServer
-import os
+import RemoteEnvironmentServer
+from   RemoteEnvironmentServer import RemoteEnvironmentServer
+from   parametered_env         import *
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--port", required=True, help="the port to use", type=int)

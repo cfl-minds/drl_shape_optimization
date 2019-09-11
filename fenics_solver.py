@@ -25,7 +25,7 @@ def solve_flow(*args, **kwargs):
     pts_y       = kwargs.get('pts_y',       np.array([]))
     cfl         = kwargs.get('cfl',         0.5)
     xmin        = kwargs.get('xmin',       -15.0)
-    xmax        = kwargs.get('xmax',       30.0)
+    xmax        = kwargs.get('xmax',        30.0)
     ymin        = kwargs.get('ymin',       -15.0)
     ymax        = kwargs.get('ymax',        15.0)
 
@@ -270,7 +270,8 @@ def solve_flow(*args, **kwargs):
             if (len(pts_x) > 0): plot_pts = True
 
             fig = plt.figure()
-            plot(u, range_min=-v_in, range_max=v_in)
+            tpc = plot(u)
+            tpc.set_clim(-1,1)
             plt.axis('off')
             ax = plt.gca()
             ax.axes.get_xaxis().set_visible(False)
@@ -280,7 +281,8 @@ def solve_flow(*args, **kwargs):
             plt.close()
 
             fig = plt.figure()
-            plot(v, range_min=-v_in, range_max=v_in)
+            tpc = plot(v, range_min=-v_in, range_max=v_in)
+            tpc.set_clim(-1,1)
             plt.axis('off')
             ax = plt.gca()
             ax.axes.get_xaxis().set_visible(False)

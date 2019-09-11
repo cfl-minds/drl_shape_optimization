@@ -144,7 +144,7 @@ class env():
 
         for i in range(self.nb_pts_to_move):
             pt     = self.pts_to_move[i]
-            radius = max(abs(deformation[i,0]),0.3)*self.max_deformation
+            radius = max(abs(deformation[i,0]),0.2)*self.max_deformation
             dangle = (360.0/float(env.shape.n_control_pts))
             angle  = dangle*float(pt)+deformation[i,1]*dangle/2.0
             x      = radius*math.cos(math.radians(angle))

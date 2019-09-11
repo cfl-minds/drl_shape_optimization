@@ -37,11 +37,14 @@ if (not os.path.isdir(best_path)):
 # Read env contents
 n_outputs   = 10
 looping     = True
-reward      = []
 glb_index   = 1
 loc_index   = 0
-avg_reward  = []
+ring_size   = 250
+ring_buffer = np.zeros([ring_size])
+ring_index  = 0
 avg_rew     = 0.0
+avg_reward  = []
+reward      = []
 
 # Loop until no more shapes can be found
 while looping:
@@ -80,11 +83,20 @@ while looping:
                 line = f.read().split('\n')[glb_index-1]
                 line = line.split(' ')
 
+            # Handle reward
             if (len(line)>1):
-                rew         = float(line[1])
-                avg_rew     += rew
-                avg_reward.append(avg_rew/(loc_index+1))
+                # Retrieve and store reward
+                rew                     = float(line[1])
+                ring_buffer[ring_index] = rew
+
+                # Compute new average
+                avg_rew = np.sum(ring_buffer)/ring_size
+                avg_reward.append(avg_rew)
                 reward.append(rew)
+
+                # Update ring buffer index
+                ring_index += 1
+                if (ring_index == ring_size): ring_index = 0
 
             # Update index
             loc_index += 1
