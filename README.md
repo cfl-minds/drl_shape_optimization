@@ -46,6 +46,8 @@ sudo docker exec -ti -u fenics shape2dopt /bin/bash -l  # get an interactive ter
   you are now in an interactive session inside the container, where the /shared folder is a mirror of your cwd, and /local contains the code, with all packages and dependencies availalbe
 ```
 
+In addition, once you are finished working, you can stop the whole container by using ```sudo docker container stop shape2dopt```
+
 The code contained in this repo is included already in the container, at: ```/home/fenics/local/shape_optimization_DRL_prep```. The source code for performing learning is available at: ```/home/fenics/local/shape_optimization_DRL_prep/src```. All necessary dependencies and packages in the correct version are already included, no more setup is needed.
 
 ## How to start learning
