@@ -50,6 +50,8 @@ In addition, once you are finished working, you can stop the whole container by 
 
 The code contained in this repo is included already in the container, at: ```/home/fenics/local/shape_optimization_DRL_prep```. The source code for performing learning is available at: ```/home/fenics/local/shape_optimization_DRL_prep/src```. All necessary dependencies and packages in the correct version are already included, no more setup is needed.
 
+For a more in-depth introduction to docker commands, and more explanations about how this container was built, see the discussions written for a similar project available at: https://github.com/jerabaul29/Cylinder2DFlowControlDRLParallel/blob/master/Docker/README_container.md .
+
 ## How to start learning
 
 It is recommended to use multiple terminals, or a multiplexer like ```tmux```, in order to manage the simulation servers vs the training client.
