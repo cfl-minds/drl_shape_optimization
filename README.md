@@ -3,6 +3,10 @@
 The code in this repository presents a case of shape optimization for aerodynamics using DRL (Deep Reinforcement Learning).
 It is based on Tensorforce for the DRL components, and on Fenics for the CFD computations. The corresponding paper is here : https://arxiv.org/abs/1908.09885. If you use this code for your research, please consider citing this paper.
 
+<p align="center">
+  <img width="300" alt="" src="https://user-images.githubusercontent.com/44053700/102597855-81a61600-411b-11eb-82e8-f7ba84b3bc13.gif">
+</p>
+
 ## What is in the repo
 
 - The parameterization of the DRL problem can be done in ```parametered_env.py```.
@@ -33,7 +37,7 @@ In addition, you will need the following packages that are provided / defined in
 
 ### Method 2 (recommended): using the docker container provided
 
-Get the docker container at: TODO-URL-release
+Get the docker container at: https://cloud.mines-paristech.fr/index.php/s/kv7ymdrITXbeBNa
 
 Load the docker container, and start an interactive session sharing your cwd to allow exchange of information in and out of the container:
 
