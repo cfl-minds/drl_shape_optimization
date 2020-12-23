@@ -1,7 +1,7 @@
 # shape_optimization_DRL_prep
 
 The code in this repository presents a case of shape optimization for aerodynamics using DRL (Deep Reinforcement Learning).
-It is based on Tensorforce for the DRL components, and on Fenics for the CFD computations. The corresponding paper is here : https://arxiv.org/abs/1908.09885. If you use this code for your research, please consider citing this paper.
+It is based on Tensorforce for the DRL components, and on Fenics for the CFD computations. The corresponding paper is <a href="https://www.sciencedirect.com/science/article/pii/S0021999120308548">here</a> and <a href="https://arxiv.org/abs/1908.09885">here</a>. If you use this code for your research, please consider citing this paper.
 
 <p align="center">
   <img width="300" alt="" src="https://user-images.githubusercontent.com/44053700/102597855-81a61600-411b-11eb-82e8-f7ba84b3bc13.gif">
