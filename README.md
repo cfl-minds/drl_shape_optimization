@@ -7,6 +7,8 @@ It is based on Tensorforce for the DRL components, and on Fenics for the CFD com
   <img width="300" alt="" src="https://user-images.githubusercontent.com/44053700/102597855-81a61600-411b-11eb-82e8-f7ba84b3bc13.gif">
 </p>
 
+**Update**: The optimization method has been greatly improved, you can find more <a href="https://github.com/jviquerat/pbo">here</a>.
+
 ## What is in the repo
 
 - The parameterization of the DRL problem can be done in ```parametered_env.py```.
